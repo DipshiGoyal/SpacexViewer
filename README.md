@@ -3,4 +3,5 @@
 Build Notes:
 Design Implemented
 
-Filter functionality
+Filter functionality is pending
+
