@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +8,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <style>
         .btn-success-active{
-            background: var(--primary) !important;
+            background: blue !important;
         }
     </style>
 </head>
@@ -63,47 +64,69 @@
     <script src="js/jquery-3.2.1.min.js"></script>
     <script>
         $(document).ready(function(){
-            //https://api.spacexdata.com/v3/launches?limit=100&launch_success=true&land_success=true&launch_year=2009
-            api_endpoint = "https://api.spaceXdata.com/v3/launches?limit=100";
-            $.getJSON(api_endpoint, function( data ) {
-                console.log(data);
-                console.log(data[0].mission_name);
+            const urlParams = new URLSearchParams(window.location.search);
+            var year = "";
+            var launch = "";
+            var land = "";
+            var request = null;
 
-                var card = "";
-                
-                $.each( data, function( key, val ) {
-                    mission_ids = 'Not availble';
-                    if (val.hasOwnProperty('mission_id'))
-                    {
-                        mission_id = val.mission_id.join(',');
-                    }
+            if(urlParams.get('launch_year'))
+                year = urlParams.get('launch_year');
+            if(urlParams.get('launch_success'))
+                launch = urlParams.get('launch_success');
+            if(urlParams.get('land_success'))
+                land = urlParams.get('land_success');
 
-                    mission = '<div class="col-sm-12 col-md-6 col-lg-3 p-3"><div class="card p-1"><img src="'+val.links.mission_patch+'" class="card-img-top img-fluid" alt=""><div class="card-body"><div class="text-primary">'+val.mission_name+'#'+val.flight_number+'</div><strong>Mission Id : </strong>'+mission_id+'<br/><strong>Launch Year : </strong>'+val.launch_year+'<br/><strong>Successful Launch : </strong>'+val.launch_success+'<br/><strong>Successful Landings : </strong>'+val.land_success+'</div></div></div>';
+            url = generateURL();
+            api_call(url);
 
-                    $("#programs").append(mission);
-                });
+            $(".btn-year").each(function(index,el){
+                if(year==$(el).text())
+                {
+                    $(el).addClass("btn-success-active");
+                }
             });
 
-            function api_call(launch_success, land_success, launch_year)
-            {
-                //alert("dgh");
-                api_endpoint = "";
-                if (launch_success == 10 && land_success == 10 && launch_year == 10) 
+            $(".btn-launch").each(function(index,el){
+                if(launch.toLowerCase() == $(el).text().toLowerCase())
                 {
-                    alert("dgh");
-                    api_endpoint = "https://api.spaceXdata.com/v3/launches?limit=100";
+                    $(el).addClass("btn-success-active");
                 }
-                
-                if (launch_year != undefined) {
-                    alert("dgh");
-                    api_endpoint = "https://api.spaceXdata.com/v3/launches?limit=100&launch_year="+launch_year;
+            });
+            
+            $(".btn-land").each(function(index,el){
+                if(land.toLowerCase() == $(el).text().toLowerCase())
+                {
+                    $(el).addClass("btn-success-active");
                 }
-                $.getJSON(api_endpoint, function( data ) {
-                    console.log(data);
-                    console.log(data[0].mission_name);
+            });
 
-                    var card = "";
-                    
+            function generateURL(){
+                api_prefix = "https://api.spaceXdata.com/v3/launches?limit=100";
+                api = api_prefix;
+                if(year!="" && year!=null)
+                {
+                    api = api + "&launch_year="+year;
+                }
+                if(launch!="" && launch!=null)
+                {
+                    api = api + "&launch_success="+launch;
+                }
+                if(land!="" && land!=null)
+                {
+                    api = api + "&land_success="+land;
+                }
+                return api;
+            }
+
+            function api_call(api_endpoint){
+                $("#programs").html("");
+                if(request)
+                {
+                    request.abort();
+                }
+                request = $.getJSON(api_endpoint, function( data ) {
+                    console.log("Data Found "+data.length)                    
                     $.each( data, function( key, val ) {
                         mission_ids = 'Not availble';
                         if (val.hasOwnProperty('mission_id'))
@@ -116,25 +139,63 @@
                         $("#programs").append(mission);
                     });
                 });
-
             }
+
             $(".btn-year").click(function(){
+                var has_class =  $(this).hasClass('btn-success-active');
                 $(".btn-year.btn-success-active").removeClass("btn-success-active");
-                $(this).toggleClass("btn-success-active");
-                window.history.pushState({}, "SpaceX Data Viewer", "index.html?launch_year="+$(this).text());
-                api_call(10,10,$(this).text());
+
+                if(!has_class)
+                {
+                    $(this).addClass("btn-success-active");
+                    year = $(this).text();
+                }
+                else
+                {
+                    $(this).removeClass("btn-success-active");
+                    year = "";
+                }
+                apiurl = generateURL();
+                api_call(apiurl);
+                window.history.pushState({}, "SpaceX Data Viewer", "index.html?" + apiurl.split("?")[1]);
             });
 
             $(".btn-launch").click(function(){
+                var has_class =  $(this).hasClass('btn-success-active');
                 $(".btn-launch.btn-success-active").removeClass("btn-success-active");
-                $(this).toggleClass("btn-success-active");
-                window.history.pushState({}, "SpaceX Data Viewer", "index.html?launch_success="+$(this).text());
+
+                if(!has_class)
+                {
+                    $(this).addClass("btn-success-active");
+                    launch = $(this).text();
+                }
+                else
+                {
+                    $(this).removeClass("btn-success-active");
+                    launch = "";
+                }
+                apiurl = generateURL();
+                api_call(apiurl);
+                window.history.pushState({}, "SpaceX Data Viewer", "index.html?" + apiurl.split("?")[1]);
             });
 
             $(".btn-land").click(function(){
+                var has_class =  $(this).hasClass('btn-success-active');
                 $(".btn-land.btn-success-active").removeClass("btn-success-active");
-                $(this).toggleClass("btn-success-active");
-                window.history.pushState({}, "SpaceX Data Viewer", "index.html?land_success="+$(this).text());
+
+                if(!has_class)
+                {
+                    $(this).addClass("btn-success-active");
+                    land = $(this).text();
+                }
+                else
+                {
+                    $(this).removeClass("btn-success-active");
+                    land = "";
+                }
+                apiurl = generateURL();
+                api_call(apiurl);
+                window.history.pushState({}, "SpaceX Data Viewer", "index.html?" + apiurl.split("?")[1]);
             });
         });
     </script>
